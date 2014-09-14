@@ -6,5 +6,18 @@
   "author": "Massimiliano Marcon",
   "license": "GPL",
   "gypfile": true,
-  "os": [ "darwin"]
+  "os": [ "darwin"],
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/mmarcon/node-smc.git"
+  },
+  "keywords": [
+    "cpu",
+    "temperature",
+    "smc",
+    "osx",
+    "darwin",
+    "mac",
+    "addon"
+  ]
 }
