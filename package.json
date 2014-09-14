@@ -1,0 +1,10 @@
+{
+  "name": "node-smc",
+  "version": "1.0.0",
+  "description": "Gives access to the CPU temperature on osx using smc",
+  "main": "index.js",
+  "author": "Massimiliano Marcon",
+  "license": "GPL",
+  "gypfile": true,
+  "os": [ "darwin"]
+}
