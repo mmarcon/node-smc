@@ -217,7 +217,7 @@ int SMCGetFanRPM(int fan_number) {
     return 0;
 }
 
-Handle<Value> Temperature(const Arguments& args) {
+v8::Handle<Value> Temperature(const Arguments& args) {
     HandleScope scope;
     SMCOpen();
     double temperature = SMCGetTemperature();
@@ -225,7 +225,7 @@ Handle<Value> Temperature(const Arguments& args) {
     return scope.Close(Number::New(temperature));
 }
 
-Handle<Value> Fans(const Arguments& args) {
+v8::Handle<Value> Fans(const Arguments& args) {
     HandleScope scope;
     SMCOpen();
     int numberOfFans = SMCGetFanNumber();
@@ -233,7 +233,7 @@ Handle<Value> Fans(const Arguments& args) {
     return scope.Close(Number::New(numberOfFans));
 }
 
-Handle<Value> FanRpm(const Arguments& args) {
+v8::Handle<Value> FanRpm(const Arguments& args) {
     HandleScope scope;
     SMCOpen();
     int rpm = SMCGetFanRPM(0);
@@ -241,7 +241,7 @@ Handle<Value> FanRpm(const Arguments& args) {
     return scope.Close(Number::New(rpm));
 }
 
-void Init(Handle<Object> exports) {
+void Init(v8::Handle<Object> exports) {
   exports->Set(String::NewSymbol("temperature"),
       FunctionTemplate::New(Temperature)->GetFunction());
   exports->Set(String::NewSymbol("fans"),
