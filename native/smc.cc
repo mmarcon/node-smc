@@ -33,13 +33,11 @@ using namespace v8;
 
 static io_connect_t conn;
 
-UInt32 _strtoul(char *str, int size, int base)
-{
+UInt32 _strtoul(char *str, int size, int base) {
     UInt32 total = 0;
     int i;
 
-    for (i = 0; i < size; i++)
-    {
+    for (i = 0; i < size; i++) {
         if (base == 16)
             total += str[i] << (size - 1 - i) * 8;
         else
@@ -48,8 +46,21 @@ UInt32 _strtoul(char *str, int size, int base)
     return total;
 }
 
-void _ultostr(char *str, UInt32 val)
-{
+float _strtof(char *str, int size, int e) {
+    float total = 0;
+    int i;
+
+    for (i = 0; i < size; i++) {
+        if (i == (size - 1))
+           total += (str[i] & 0xff) >> e;
+        else
+           total += str[i] << (size - 1 - i) * (8 - e);
+    }
+
+    return total;
+}
+
+void _ultostr(char *str, UInt32 val) {
     str[0] = '\0';
     sprintf(str, "%c%c%c%c",
             (unsigned int) val >> 24,
@@ -58,8 +69,7 @@ void _ultostr(char *str, UInt32 val)
             (unsigned int) val);
 }
 
-kern_return_t SMCOpen(void)
-{
+kern_return_t SMCOpen(void) {
     kern_return_t result;
     mach_port_t   masterPort;
     io_iterator_t iterator;
@@ -69,24 +79,21 @@ kern_return_t SMCOpen(void)
 
     CFMutableDictionaryRef matchingDictionary = IOServiceMatching("AppleSMC");
     result = IOServiceGetMatchingServices(masterPort, matchingDictionary, &iterator);
-    if (result != kIOReturnSuccess)
-    {
+    if (result != kIOReturnSuccess) {
         printf("Error: IOServiceGetMatchingServices() = %08x\n", result);
         return 1;
     }
 
     device = IOIteratorNext(iterator);
     IOObjectRelease(iterator);
-    if (device == 0)
-    {
+    if (device == 0) {
         printf("Error: no SMC found\n");
         return 1;
     }
 
     result = IOServiceOpen(device, mach_task_self(), 0, &conn);
     IOObjectRelease(device);
-    if (result != kIOReturnSuccess)
-    {
+    if (result != kIOReturnSuccess) {
         printf("Error: IOServiceOpen() = %08x\n", result);
         return 1;
     }
@@ -94,14 +101,12 @@ kern_return_t SMCOpen(void)
     return kIOReturnSuccess;
 }
 
-kern_return_t SMCClose()
-{
+kern_return_t SMCClose() {
     return IOServiceClose(conn);
 }
 
 
-kern_return_t SMCCall(int index, SMCKeyData_t *inputStructure, SMCKeyData_t *outputStructure)
-{
+kern_return_t SMCCall(int index, SMCKeyData_t *inputStructure, SMCKeyData_t *outputStructure) {
     size_t   structureInputSize;
     size_t   structureOutputSize;
 
@@ -124,8 +129,7 @@ kern_return_t SMCCall(int index, SMCKeyData_t *inputStructure, SMCKeyData_t *out
 
 }
 
-kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t *val)
-{
+kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t *val) {
     kern_return_t result;
     SMCKeyData_t  inputStructure;
     SMCKeyData_t  outputStructure;
@@ -155,12 +159,11 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t *val)
     return kIOReturnSuccess;
 }
 
-double SMCGetTemperature(char *key)
-{
+double SMCGetTemperature() {
     SMCVal_t val;
     kern_return_t result;
 
-    result = SMCReadKey(key, &val);
+    result = SMCReadKey((char*) SMC_KEY_CPU_TEMP, &val);
     if (result == kIOReturnSuccess) {
         // read succeeded - check returned value
         if (val.dataSize > 0) {
@@ -175,17 +178,76 @@ double SMCGetTemperature(char *key)
     return 0.0;
 }
 
+int SMCGetFanNumber() {
+    SMCVal_t val;
+    kern_return_t result;
+
+    result = SMCReadKey((char*) SMC_KEY_FAN_NUMBER, &val);
+    if (result == kIOReturnSuccess) {
+        // read succeeded - check returned value
+        if (val.dataSize > 0) {
+            if (strcmp(val.dataType, DATATYPE_UINT8) == 0) {
+                int intValue = _strtoul((char *)val.bytes, val.dataSize, 10);
+                return intValue;
+            }
+        }
+    }
+    // read failed
+    return 0;
+}
+
+int SMCGetFanRPM(int fan_number) {
+    SMCVal_t val;
+    kern_return_t result;
+    UInt32Char_t key;
+
+    sprintf(key, SMC_PKEY_FAN_RPM, fan_number);
+
+    result = SMCReadKey(key, &val);
+    if (result == kIOReturnSuccess) {
+        // read succeeded - check returned value
+        if (val.dataSize > 0) {
+            if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
+                int intValue = _strtof(val.bytes, val.dataSize, 2);
+                return intValue;
+            }
+        }
+    }
+    // read failed
+    return 0;
+}
+
 Handle<Value> Temperature(const Arguments& args) {
     HandleScope scope;
     SMCOpen();
-    double temperature = SMCGetTemperature((char*) SMC_KEY_CPU_TEMP);
+    double temperature = SMCGetTemperature();
     SMCClose();
     return scope.Close(Number::New(temperature));
+}
+
+Handle<Value> Fans(const Arguments& args) {
+    HandleScope scope;
+    SMCOpen();
+    int numberOfFans = SMCGetFanNumber();
+    SMCClose();
+    return scope.Close(Number::New(numberOfFans));
+}
+
+Handle<Value> FanRpm(const Arguments& args) {
+    HandleScope scope;
+    SMCOpen();
+    int rpm = SMCGetFanRPM(0);
+    SMCClose();
+    return scope.Close(Number::New(rpm));
 }
 
 void Init(Handle<Object> exports) {
   exports->Set(String::NewSymbol("temperature"),
       FunctionTemplate::New(Temperature)->GetFunction());
+  exports->Set(String::NewSymbol("fans"),
+      FunctionTemplate::New(Fans)->GetFunction());
+  exports->Set(String::NewSymbol("fanRpm"),
+      FunctionTemplate::New(FanRpm)->GetFunction());
 }
 
 NODE_MODULE(smc, Init)
