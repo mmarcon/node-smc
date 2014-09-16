@@ -175,7 +175,7 @@ double SMCGetTemperature(char *key)
     return 0.0;
 }
 
-Handle<Value> Temperature(const Arguments& args) {
+v8::Handle<Value> Temperature(const Arguments& args) {
     HandleScope scope;
     SMCOpen();
     double temperature = SMCGetTemperature((char*) SMC_KEY_CPU_TEMP);
@@ -183,7 +183,7 @@ Handle<Value> Temperature(const Arguments& args) {
     return scope.Close(Number::New(temperature));
 }
 
-void Init(Handle<Object> exports) {
+void Init(v8::Handle<Object> exports) {
   exports->Set(String::NewSymbol("temperature"),
       FunctionTemplate::New(Temperature)->GetFunction());
 }
