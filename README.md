@@ -1,8 +1,24 @@
 # Node SMC
 
-This node module uses [Apple's SMC subsystem](http://en.wikipedia.org/wiki/System_Management_Controller) to query the system for the CPU temperature.
+This node module uses [Apple's SMC subsystem](http://en.wikipedia.org/wiki/System_Management_Controller) to query the system for the CPU temperature, number of fans and for each of the fans retrieves the current RPM.
 
 **This packages works on OSX only**.
+
+## Example
+
+```javascript
+var smc = require('node-smc');
+
+console.log('Temperature:', smc.temperature());
+
+var i, f = smc.fans();
+console.log('Fans:', f);
+
+for (i = 0; i < f; i++) {
+    console.log('Fan', i, 'RPM:', smc.fanRpm(i));
+}
+
+```
 
 ## Credits
 
@@ -16,4 +32,4 @@ Additional credit goes to [Hendrik Holtmann](https://github.com/hholtmann), the 
 
 ## TODO
 
-Make is asynchronous.
+Make it asynchronous, as currently everything happens synchronously.
