@@ -235,8 +235,17 @@ v8::Handle<Value> Fans(const Arguments& args) {
 
 v8::Handle<Value> FanRpm(const Arguments& args) {
     HandleScope scope;
+    if (args.Length() < 1) {
+        //Fan number (id) isn't specified
+        return scope.Close(Undefined());
+    }
+    if (!args[0]->IsNumber()) {
+        ThrowException(Exception::TypeError(String::New("Expected number")));
+        return scope.Close(Undefined());
+    }
+    int fanNumber = args[0]->Int32Value();
     SMCOpen();
-    int rpm = SMCGetFanRPM(0);
+    int rpm = SMCGetFanRPM(fanNumber);
     SMCClose();
     return scope.Close(Number::New(rpm));
 }
