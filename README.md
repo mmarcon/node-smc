@@ -24,6 +24,12 @@ for (i = 0; i < f; i++) {
 
 ```
 
+On my Macbook Air this prints out the following:
+
+    Temperature: 35.625
+    Fans: 1
+    Fan 0 RPM: 1201
+
 ## Credits
 
 Most of the work was done by [Sébastien Lavoie](https://github.com/lavoiesl) in his [osx-cpu-temp](https://github.com/lavoiesl/osx-cpu-temp) code. I just took it and made it into a node module, as it was convenient for me to use it that way.
