@@ -4,6 +4,10 @@ This node module uses [Apple's SMC subsystem](http://en.wikipedia.org/wiki/Syste
 
 **This packages works on OSX only**.
 
+## Installation
+
+    ➜  ~ npm install smc
+
 ## Example
 
 ```javascript
@@ -24,7 +28,7 @@ for (i = 0; i < f; i++) {
 
 Most of the work was done by [Sébastien Lavoie](https://github.com/lavoiesl) in his [osx-cpu-temp](https://github.com/lavoiesl/osx-cpu-temp) code. I just took it and made it into a node module, as it was convenient for me to use it that way.
 
-Additional credit goes to [Hendrik Holtmann](https://github.com/hholtmann), the author of [smcFanControl](https://github.com/hholtmann/smcFanControl) as his code inspired osx-cpu-temp.
+Additional credit goes to [Hendrik Holtmann](https://github.com/hholtmann), the author of [smcFanControl](https://github.com/hholtmann/smcFanControl) as his code inspired osx-cpu-temp and as I used part of the code of smcFanControl to query the fan speed and format the result.
 
 ## License
 
