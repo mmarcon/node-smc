@@ -1,5 +1,5 @@
 {
-  "name": "node-smc",
+  "name": "smc",
   "version": "1.0.0",
   "description": "Gives access to the CPU temperature on osx using smc",
   "main": "index.js",
