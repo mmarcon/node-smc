@@ -71,14 +71,11 @@ void _ultostr(char *str, UInt32 val) {
 
 kern_return_t SMCOpen(void) {
     kern_return_t result;
-    mach_port_t   masterPort;
     io_iterator_t iterator;
     io_object_t   device;
 
-    result = IOMasterPort(MACH_PORT_NULL, &masterPort);
-
     CFMutableDictionaryRef matchingDictionary = IOServiceMatching("AppleSMC");
-    result = IOServiceGetMatchingServices(masterPort, matchingDictionary, &iterator);
+    result = IOServiceGetMatchingServices(kIOMasterPortDefault, matchingDictionary, &iterator);
     if (result != kIOReturnSuccess) {
         printf("Error: IOServiceGetMatchingServices() = %08x\n", result);
         return 1;
@@ -168,9 +165,9 @@ double SMCGetTemperature() {
         // read succeeded - check returned value
         if (val.dataSize > 0) {
             if (strcmp(val.dataType, DATATYPE_SP78) == 0) {
-                // convert fp78 value to temperature
-                int intValue = (val.bytes[0] * 256 + val.bytes[1]) >> 2;
-                return intValue / 64.0;
+                // convert sp78 value to temperature
+                int intValue = val.bytes[0] * 256 + (unsigned char)val.bytes[1];
+                return intValue / 256.0;
             }
         }
     }
@@ -217,46 +214,48 @@ int SMCGetFanRPM(int fan_number) {
     return 0;
 }
 
-v8::Handle<Value> Temperature(const Arguments& args) {
-    HandleScope scope;
+void Temperature(const FunctionCallbackInfo<Value>& args) {
+    Isolate* isolate = Isolate::GetCurrent();
+    HandleScope scope(isolate);
     SMCOpen();
     double temperature = SMCGetTemperature();
     SMCClose();
-    return scope.Close(Number::New(temperature));
+    args.GetReturnValue().Set(Number::New(isolate, temperature));
 }
 
-v8::Handle<Value> Fans(const Arguments& args) {
-    HandleScope scope;
+void Fans(const FunctionCallbackInfo<Value>&  args) {
+    Isolate* isolate = Isolate::GetCurrent();
+    HandleScope scope(isolate);
     SMCOpen();
     int numberOfFans = SMCGetFanNumber();
     SMCClose();
-    return scope.Close(Number::New(numberOfFans));
+    args.GetReturnValue().Set(Number::New(isolate, numberOfFans));
 }
 
-v8::Handle<Value> FanRpm(const Arguments& args) {
-    HandleScope scope;
+void FanRpm(const FunctionCallbackInfo<Value>&  args) {
+    Isolate* isolate = Isolate::GetCurrent();
+    HandleScope scope(isolate);
     if (args.Length() < 1) {
         //Fan number (id) isn't specified
-        return scope.Close(Undefined());
+        args.GetReturnValue().Set(Undefined(isolate));
+        return;
     }
     if (!args[0]->IsNumber()) {
-        ThrowException(Exception::TypeError(String::New("Expected number")));
-        return scope.Close(Undefined());
+        isolate->ThrowException(Exception::TypeError(
+        String::NewFromUtf8(isolate, "Expected number")));
+        return;
     }
     int fanNumber = args[0]->Int32Value();
     SMCOpen();
     int rpm = SMCGetFanRPM(fanNumber);
     SMCClose();
-    return scope.Close(Number::New(rpm));
+    args.GetReturnValue().Set(Number::New(isolate, rpm));
 }
 
 void Init(v8::Handle<Object> exports) {
-  exports->Set(String::NewSymbol("temperature"),
-      FunctionTemplate::New(Temperature)->GetFunction());
-  exports->Set(String::NewSymbol("fans"),
-      FunctionTemplate::New(Fans)->GetFunction());
-  exports->Set(String::NewSymbol("fanRpm"),
-      FunctionTemplate::New(FanRpm)->GetFunction());
+    NODE_SET_METHOD(exports, "temperature", Temperature);
+    NODE_SET_METHOD(exports, "fans", Fans);
+    NODE_SET_METHOD(exports, "fanRpm", FanRpm);
 }
 
 NODE_MODULE(smc, Init)
