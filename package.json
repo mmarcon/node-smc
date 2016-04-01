@@ -1,12 +1,13 @@
 {
   "name": "smc",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Node module to read the CPU temperature and fan speed on osx using smc",
   "main": "index.js",
   "author": "Massimiliano Marcon",
   "license": "GPL",
   "gypfile": true,
   "os": [ "darwin"],
+  "engines" : { "node" : ">=0.12" },
   "repository": {
     "type" : "git",
     "url" : "https://github.com/mmarcon/node-smc.git"
