@@ -21,7 +21,7 @@
 #define __SMC_H__
 #endif
 
-#define VERSION               "0.01"
+#define VERSION               "0.02"
 
 #define KERNEL_INDEX_SMC      2
 
@@ -37,12 +37,6 @@
 #define DATATYPE_UINT16       "ui16"
 #define DATATYPE_UINT32       "ui32"
 #define DATATYPE_SP78         "sp78"
-
-// key values
-#define SMC_KEY_CPU_TEMP      "TC0P"
-#define SMC_KEY_FAN_NUMBER    "FNum"
-#define SMC_PKEY_FAN_RPM      "F%dAc"
-
 
 typedef struct {
     char                  major;
@@ -88,10 +82,3 @@ typedef struct {
   UInt32Char_t            dataType;
   SMCBytes_t              bytes;
 } SMCVal_t;
-
-
-// prototypes
-double SMCGetTemperature(char *key);
-kern_return_t SMCSetFanRpm(char *key, int rpm);
-int SMCGetFanRpm(char *key);
-
