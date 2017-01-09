@@ -6,29 +6,55 @@ This node module uses [Apple's SMC subsystem](http://en.wikipedia.org/wiki/Syste
 
 ## Installation
 
-    ➜  ~ npm install smc
+```sh
+npm install smc
+```
 
 ## Example
 
 ```javascript
-var smc = require('node-smc');
+var smc = require('smc');
 
-console.log('Temperature:', smc.temperature());
+Object.keys(smc.metrics).forEach(function(key) {
+  var value = smc.get(key);
+  if (value > 0) {
+    console.log(key, smc.metrics[key]+':', value);
+  }
+});
 
 var i, f = smc.fans();
-console.log('Fans:', f);
 
 for (i = 0; i < f; i++) {
-    console.log('Fan', i, 'RPM:', smc.fanRpm(i));
+  console.log('F'+i+'Ac', 'Fan', i, 'RPM:', smc.fanRpm(i));
 }
-
 ```
 
-On my Macbook Air this prints out the following:
+On my Macbook Pro this prints out the following:
 
-    Temperature: 35.625
-    Fans: 1
-    Fan 0 RPM: 1201
+```
+TB0T Battery TS_MAX: 34.59765625
+TB1T Battery 1: 34.59765625
+TB2T Battery 2: 32.59765625
+TCXC PECI CPU: 78.875
+TC0E CPU 0 ??: 80.56640625
+TC0F CPU 0 ??: 82.16015625
+TC0P CPU 0 Proximity: 65.875
+TC1C Core 1: 77
+TC2C Core 2: 78
+TC3C Core 3: 77
+TC4C Core 4: 75
+TCGC PECI GPU: 78
+TCSA PECI SA: 78
+Th1H NB/CPU/GPU HeatPipe 1 Proximity: 51.625
+TM0P Memory Slot Proximity: 53.125
+TM0S Memory Slot 1: 53.1171875
+TPCD Platform Controller Hub Die: 57
+Ts0P Palm rest L: 32.5
+Ts0S Memory Bank Proximity: 40.23046875
+TW0P AirPort Proximity: 48.5
+F0Ac Fan 0 RPM: 2160
+F1Ac Fan 1 RPM: 2001
+```
 
 ## Credits
 

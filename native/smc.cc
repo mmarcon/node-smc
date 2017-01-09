@@ -156,11 +156,11 @@ kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t *val) {
     return kIOReturnSuccess;
 }
 
-double SMCGetTemperature() {
+double SMCGet(UInt32Char_t key) {
     SMCVal_t val;
     kern_return_t result;
 
-    result = SMCReadKey((char*) SMC_KEY_CPU_TEMP, &val);
+    result = SMCReadKey((char*) key, &val);
     if (result == kIOReturnSuccess) {
         // read succeeded - check returned value
         if (val.dataSize > 0) {
@@ -169,41 +169,10 @@ double SMCGetTemperature() {
                 int intValue = val.bytes[0] * 256 + (unsigned char)val.bytes[1];
                 return intValue / 256.0;
             }
-        }
-    }
-    // read failed
-    return 0.0;
-}
-
-int SMCGetFanNumber() {
-    SMCVal_t val;
-    kern_return_t result;
-
-    result = SMCReadKey((char*) SMC_KEY_FAN_NUMBER, &val);
-    if (result == kIOReturnSuccess) {
-        // read succeeded - check returned value
-        if (val.dataSize > 0) {
             if (strcmp(val.dataType, DATATYPE_UINT8) == 0) {
                 int intValue = _strtoul((char *)val.bytes, val.dataSize, 10);
                 return intValue;
             }
-        }
-    }
-    // read failed
-    return 0;
-}
-
-int SMCGetFanRPM(int fan_number) {
-    SMCVal_t val;
-    kern_return_t result;
-    UInt32Char_t key;
-
-    sprintf(key, SMC_PKEY_FAN_RPM, fan_number);
-
-    result = SMCReadKey(key, &val);
-    if (result == kIOReturnSuccess) {
-        // read succeeded - check returned value
-        if (val.dataSize > 0) {
             if (strcmp(val.dataType, DATATYPE_FPE2) == 0) {
                 int intValue = _strtof(val.bytes, val.dataSize, 2);
                 return intValue;
@@ -211,51 +180,31 @@ int SMCGetFanRPM(int fan_number) {
         }
     }
     // read failed
-    return 0;
+    return 0.0;
 }
 
-void Temperature(const FunctionCallbackInfo<Value>& args) {
+void Get(const FunctionCallbackInfo<Value>& args) {
     Isolate* isolate = Isolate::GetCurrent();
     HandleScope scope(isolate);
     SMCOpen();
-    double temperature = SMCGetTemperature();
-    SMCClose();
-    args.GetReturnValue().Set(Number::New(isolate, temperature));
-}
-
-void Fans(const FunctionCallbackInfo<Value>&  args) {
-    Isolate* isolate = Isolate::GetCurrent();
-    HandleScope scope(isolate);
-    SMCOpen();
-    int numberOfFans = SMCGetFanNumber();
-    SMCClose();
-    args.GetReturnValue().Set(Number::New(isolate, numberOfFans));
-}
-
-void FanRpm(const FunctionCallbackInfo<Value>&  args) {
-    Isolate* isolate = Isolate::GetCurrent();
-    HandleScope scope(isolate);
     if (args.Length() < 1) {
-        //Fan number (id) isn't specified
         args.GetReturnValue().Set(Undefined(isolate));
         return;
     }
-    if (!args[0]->IsNumber()) {
+    if (!args[0]->IsString()) {
         isolate->ThrowException(Exception::TypeError(
-        String::NewFromUtf8(isolate, "Expected number")));
+        String::NewFromUtf8(isolate, "Expected string")));
         return;
     }
-    int fanNumber = args[0]->Int32Value();
-    SMCOpen();
-    int rpm = SMCGetFanRPM(fanNumber);
+    v8::String::Utf8Value k(args[0]->ToString());
+    char *key = *k;
+    double value = SMCGet(key);
     SMCClose();
-    args.GetReturnValue().Set(Number::New(isolate, rpm));
+    args.GetReturnValue().Set(Number::New(isolate, value));
 }
 
 void Init(v8::Handle<Object> exports) {
-    NODE_SET_METHOD(exports, "temperature", Temperature);
-    NODE_SET_METHOD(exports, "fans", Fans);
-    NODE_SET_METHOD(exports, "fanRpm", FanRpm);
+    NODE_SET_METHOD(exports, "get", Get);
 }
 
 NODE_MODULE(smc, Init)

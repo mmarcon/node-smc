@@ -1,10 +1,14 @@
 var smc = require('../');
 
-console.log('Temperature:', smc.temperature());
+Object.keys(smc.metrics).forEach(function(key) {
+  var value = smc.get(key);
+  if (value > 0) {
+    console.log(key, smc.metrics[key]+':', value);
+  }
+});
 
 var i, f = smc.fans();
-console.log('Fans:', f);
 
 for (i = 0; i < f; i++) {
-    console.log('Fan', i, 'RPM:', smc.fanRpm(i));
+  console.log('F'+i+'Ac', 'Fan', i, 'RPM:', smc.fanRpm(i));
 }
